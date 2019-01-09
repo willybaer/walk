@@ -60,10 +60,6 @@ def generate_example_config(directory, force=False):
 
 def new(file_name, migrations_dir):
     # Creating migrations folder if not exists
-    full_path = os.path.realpath(__file__)
-    file_dir = os.path.split(full_path)[0]
-    migrations_dir = '%s/%s' % (file_dir, migrations_dir)
-
     if not os.path.exists(migrations_dir):
         os.makedirs(migrations_dir)
 
