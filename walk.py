@@ -75,11 +75,7 @@ def cursor(con):
     return con.cursor(cursor_factory=DictCursor)    
 
 def migrate(env, db_config, migrations_dir):
-    # Migrations file
-    full_path = os.path.realpath(__file__)
-    file_dir = os.path.split(full_path)[0]
-    migrations_dir = '%s/%s' % (file_dir, migrations_dir)
-    
+    # Migrations folder
     if os.path.exists(migrations_dir):
         # Run migrations
         conn = connection(db_config=db_config)
@@ -133,7 +129,7 @@ def migrate(env, db_config, migrations_dir):
             if conn is not None:
                 conn.close()
     else:
-        print('Migrations folder does not exists. Use command \'\'')
+        print('Migrations folder does not exists: %s' % migrations_dir)
 
 def main():
     argv = sys.argv
