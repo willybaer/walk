@@ -156,7 +156,7 @@ def main():
     ## New migrations file
     migrations_directory = './migrations' # Default
     if 'new=' in args.keys():
-        new_file = args['new=']
+        new_file = args['new='][0]
         new(file_name=new_file, migrations_dir=migrations_directory)
         return
     
@@ -167,14 +167,14 @@ def main():
 
     env = 'dev'
     if 'env=' in args.keys():
-        env = args['env=']
+        env = args['env='][0]
 
     ## Merge config params
     config_to_merge = []
     config_params_to_merge = []
     if 'param=' in args.keys():
         config_to_merge = args['param=']
-        config_params_to_merge = list(filter(lambda e: e.split('=')[0] in ALLOWED_CONFIG_PARAMS, config_to_merge))
+        config_params_to_merge = list(map(lambda f: f.split('=')[0], filter(lambda e: e.split('=')[0] in ALLOWED_CONFIG_PARAMS, config_to_merge)))
 
     with open('./%s' % CONFIG_FILE_NAME, mode='r') as f:
         configs = json.load(f)    
