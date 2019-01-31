@@ -25,7 +25,7 @@ EXAMPLE_CONFIG = {
         'password=pw'
     ]
 }
-
+ALLOWED_CONFIG_PARAMS = ['user', 'dbname', 'password', 'host', 'port']
 DB_CHANGE_LOG = 'database_change_log'
 MIGRATIONS_DIR = 'migrations'
 CONFIG_FILE_NAME = 'walk_config.json'
@@ -133,7 +133,7 @@ def migrate(env, db_config, migrations_dir):
 
 def main():
     argv = sys.argv
-    args = filter_args(argv=argv, opts=[('n:', 'new='), ('m', 'migrate'), ('e:', 'env='), ('i', 'init'), ('f', 'force')])
+    args = filter_args(argv=argv, opts=[('n:', 'new='), ('m', 'migrate'), ('e:', 'env='), ('i', 'init'), ('f', 'force'), ('p:', 'param=')])
 
     # Print information
     if 'new=' not in args.keys() and 'migrate' not in args.keys() and 'init' not in args.keys():
@@ -143,6 +143,7 @@ def main():
                 '-n or --new test_abc           Creates a new migration file. \n' +
                 '-m or --migrate                Runs the migrations. \n' +
                 '-e or --env test               Database environment which will be chosen for the migrations. \n' +
+                ('-p or --param dbname=db        Pass database connections parameters dynamically. Valid attributes: %s \n' % ALLOWED_CONFIG_PARAMS) +
                 '')
         return
 
@@ -168,13 +169,22 @@ def main():
     if 'env=' in args.keys():
         env = args['env=']
 
+    ## Merge config params
+    config_to_merge = []
+    config_params_to_merge = []
+    if 'param=' in args.keys():
+        config_to_merge = args['param=']
+        config_params_to_merge = list(filter(lambda e: e.split('=')[0] in ALLOWED_CONFIG_PARAMS, config_to_merge))
+
     with open('./%s' % CONFIG_FILE_NAME, mode='r') as f:
         configs = json.load(f)    
-        if env not in configs:
+        if env not in configs and len(config_to_merge) == 0:
             print('Missing configuration for environment %s' % env)
             return
 
     config = configs[env]
+    config_file = list(filter(lambda e: e.split('=')[0] not in config_params_to_merge, config))
+    config = config_to_merge + config_file
     if 'migrate' in args.keys():
         migrate(env, migrations_dir=migrations_directory, db_config=config)    
 

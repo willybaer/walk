@@ -22,6 +22,16 @@ def filter_args(argv:list, opts:list):
         opts_map[s_opt] = opt[1]
         opts_map[l_opt] = opt[1]
     
-    args = dict(map(lambda oa: (opts_map[oa[0].replace('-', '')], oa[1].strip()), found_opts[0]))
+    args = {}
+    for oa in found_opts[0]:
+        key = opts_map[oa[0].replace('-', '')]
+        if key in args:
+            if isinstance(args[key], list):
+                args[key].append(oa[1].strip())
+            else:    
+                current_entry = args[key]
+                args[key] = [current_entry, oa[1].strip()]
+        else:        
+            args[key] = oa[1].strip()        
 
     return args

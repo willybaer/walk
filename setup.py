@@ -3,9 +3,9 @@ import setuptools
 
 setuptools.setup(
     name='walk',
-    version='0.0.1',
+    version='0.2',
     author='Wilhelm Dewald',
-    description='My own database migration tool for postgres by using psycopg2 for python3.',
+    description='My own database migration and seeds tool for postgres by using psycopg2 with python3.',
     long_description_content_type='text/markdown',
     install_requires=[
         'psycopg2'
