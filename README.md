@@ -37,6 +37,19 @@ The default walk_config.json looks like this.
 }
 ```
 
+Passing db config parameters directly to the command. The config attributes in the config file which are also included in the command paramters list will be ignored.
+
+```
+"dev": {
+    "dbname=test"
+}
+
+walk -p dbname=prod -p password=pw -e dev
+
+-> dbname=prod will be taken
+```
+
+
 For more configuration parameters look inside the documentation of the 'psycopg2' connection class. [Here](http://initd.org/psycopg/docs/module.html)
 
 ### Migrations sql file
