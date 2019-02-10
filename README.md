@@ -1,12 +1,17 @@
 # WALK
 
-Walk is a simple python migrations tool for postgres databases. The application is based on 'psycopg2' to run sql commands.
+Walk is a simple python migrations and seeds tool for postgres databases. The application is based on 'psycopg2' to run sql commands.
 
 ## Installation
 Download the this git repository and than inside the root folder of the repository.
 
 ```
-pip3 install -e .
+pip install walk
+```
+
+Current Version
+```
+0.2.4
 ```
 
 ### Configuration
@@ -54,9 +59,9 @@ For more configuration parameters look inside the documentation of the 'psycopg2
 
 ### Migrations sql file
 
-To create a new migrations file inside the migrations folder. Use the following command. The default datbase environment is 'dev'.
+To create a new migrations file inside the migrations folder. Use the following command. The default database environment is 'dev'.
 ```
-walk --new test_file_name --env dev
+walk --new test_file_name
 ```
 
 ### Execute migrations
@@ -64,4 +69,20 @@ walk --new test_file_name --env dev
 To execute the migration files for the 'dev' database enviroment use the following command.
 ```
 walk --migrate --env dev
+```
+
+### Seeds sql file
+
+To create a new seed file inside the seeds folder. Use the following command. The default database environment is 'dev'.
+```
+walk --newseed test_seed_name 
+```
+
+### Execute seeds
+
+To execute the seed files for the 'dev' database enviroment use the following command. You can also combine the seeds and the migrations. 
+Migrations will be executed first so that seeds can also access current db changes.
+
+```
+walk --seed --env dev
 ```
