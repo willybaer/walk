@@ -70,7 +70,8 @@ def new(file_name, t_dir, task='migrations'):
 
 def create_env_database(cur, db_name):
     try:
-        cur.execute('CREATE DATABASE %s', db_name)
+        sql = 'CREATE DATABASE %s' % db_name
+        cur.execute(sql)
     except Exception as e:
         print(e)
         print('Could not create database %s' % db_name)
@@ -78,23 +79,33 @@ def create_env_database(cur, db_name):
 def run(db_config, t_dir, task='migration', db_log=DB_CHANGE_LOG):
     # Task folder
     if os.path.exists(t_dir):
-        # Open connection and create a cursor
+        # Check if table exists
+        db_conn = connection(db_config=db_config, auto_commit=True) # Needed for the db check
+        if not db_conn.database_exists(db_conn.params['dbname']):
+            print('Creating database %s' % db_conn.params['dbname'])
+            cur = db_conn.cursor()
+            create_env_database(cur, db_conn.params['dbname'])
+            cur.close()
+            db_conn.close()
+        else:
+            print('Database %s already exists' % db_conn.params['dbname'])
+            
+        # Opens a new connection
         conn = connection(db_config=db_config)
         cur = conn.cursor()
 
         # Check if change log table exists
-        cur.execute('select exists(select * from information_schema.tables where table_name=%s)',
-                    db_log)
-        if not cur.fetchone()[0]:
-            # Trying to create database before
-            create_env_database(cur, conn.params['dbname'])
-
+        cur.execute('select exists(select * from information_schema.tables where table_name=%s) as num_entries',
+                    (db_log,))
+        entry = cur.fetchone()
+        if not entry['num_entries']:
             # Creating log table
             print('creating database change log table')
-            cur.execute('CREATE TABLE %s (id serial primary key, last_timestamp bigint)', db_log)
+            sql = 'CREATE TABLE %s (id serial primary key, last_timestamp bigint)' % db_log
+            cur.execute(sql)
             conn.commit()
         else:
-            print('database changelog table already exists')
+            print('Database changelog table already exists')
 
         # Iterate over task files
         files = os.listdir(t_dir)
@@ -108,7 +119,8 @@ def run(db_config, t_dir, task='migration', db_log=DB_CHANGE_LOG):
                     log_level = log_level[0]
 
                     # Check if migration exists
-                    cur.execute('SELECT * FROM %s ORDER BY last_timestamp DESC', db_log)
+                    sql = 'SELECT * FROM %s ORDER BY last_timestamp DESC' % db_log
+                    cur.execute(sql)
                     last_entry = cur.fetchone()
 
                     if last_entry and last_entry['last_timestamp'] >= int(log_level):
@@ -122,7 +134,8 @@ def run(db_config, t_dir, task='migration', db_log=DB_CHANGE_LOG):
 
                         # Add migration log entry
                         print('Adding log entry for timestamp: %s' % log_level)
-                        cur.execute('INSERT INTO %s (last_timestamp) VALUES (%s)', db_log, int(log_level))
+                        sql = 'INSERT INTO %s (last_timestamp) VALUES (%s)' % (db_log, int(log_level))
+                        cur.execute(sql)
                         conn.commit()
         except Exception as e:
             print(e)
