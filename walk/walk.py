@@ -7,8 +7,7 @@ import psycopg2
 import traceback
 
 from walk.argsextractor import filter_args
-from psycopg2.extensions import AsIs
-from psycopg2.extras import DictCursor
+from walk.connector import connection
 
 EXAMPLE_CONFIG = {
     'test': [
@@ -25,17 +24,12 @@ EXAMPLE_CONFIG = {
         'password=pw'
     ]
 }
+
 ALLOWED_CONFIG_PARAMS = ['user', 'dbname', 'password', 'host', 'port']
 DB_CHANGE_LOG = 'database_change_log'
 DB_LOG_SEEDS = 'database_seeds_log'
 MIGRATIONS_DIR = 'migrations'
 CONFIG_FILE_NAME = 'walk_config.json'
-
-def connection(db_config):
-    return psycopg2.connect(' '.join(db_config))
-
-def cursor(con):
-    return con.cursor(cursor_factory=DictCursor)
 
 def generate_example_config(directory, force=False):
     # Check if the config file is existing
@@ -74,19 +68,30 @@ def new(file_name, t_dir, task='migrations'):
     open('%s/%s' % (t_dir, d_file_name), 'w')
     print('Created new %s file %s' % (task, d_file_name))        
 
-def run(env, db_config, t_dir, task='migration', db_log=DB_CHANGE_LOG):
+def create_env_database(cur, db_name):
+    try:
+        cur.execute('CREATE DATABASE %s', db_name)
+    except Exception as e:
+        print(e)
+        print('Could not create database %s' % db_name)
+
+def run(db_config, t_dir, task='migration', db_log=DB_CHANGE_LOG):
     # Task folder
     if os.path.exists(t_dir):
         # Open connection and create a cursor
         conn = connection(db_config=db_config)
-        cur = cursor(con=conn)
+        cur = conn.cursor()
 
         # Check if change log table exists
         cur.execute('select exists(select * from information_schema.tables where table_name=%s)',
-                    (db_log,))
+                    db_log)
         if not cur.fetchone()[0]:
+            # Trying to create database before
+            create_env_database(cur, conn.params['dbname'])
+
+            # Creating log table
             print('creating database change log table')
-            cur.execute('CREATE TABLE %s (id serial primary key, last_timestamp bigint)', (AsIs(db_log),))
+            cur.execute('CREATE TABLE %s (id serial primary key, last_timestamp bigint)', db_log)
             conn.commit()
         else:
             print('database changelog table already exists')
@@ -103,7 +108,7 @@ def run(env, db_config, t_dir, task='migration', db_log=DB_CHANGE_LOG):
                     log_level = log_level[0]
 
                     # Check if migration exists
-                    cur.execute('SELECT * FROM %s ORDER BY last_timestamp DESC', (AsIs(db_log),))
+                    cur.execute('SELECT * FROM %s ORDER BY last_timestamp DESC', db_log)
                     last_entry = cur.fetchone()
 
                     if last_entry and last_entry['last_timestamp'] >= int(log_level):
@@ -117,7 +122,7 @@ def run(env, db_config, t_dir, task='migration', db_log=DB_CHANGE_LOG):
 
                         # Add migration log entry
                         print('Adding log entry for timestamp: %s' % log_level)
-                        cur.execute('INSERT INTO %s (last_timestamp) VALUES (%s)', (AsIs(db_log), int(log_level),))
+                        cur.execute('INSERT INTO %s (last_timestamp) VALUES (%s)', db_log, int(log_level))
                         conn.commit()
         except Exception as e:
             print(e)
@@ -197,10 +202,10 @@ def main():
     config_file = list(filter(lambda e: e.split('=')[0] not in config_params_to_merge, config))
     config = config_to_merge + config_file
     if 'migrate' in args.keys():
-        run(env, t_dir=migrations_directory, db_config=config, task='migration', db_log=DB_CHANGE_LOG)
+        run(t_dir=migrations_directory, db_config=config, task='migration', db_log=DB_CHANGE_LOG)
 
     if 'seeds' in args.keys():
-        run(env, t_dir=seeds_directory, db_config=config, task='seed', db_log=DB_LOG_SEEDS)        
+        run(t_dir=seeds_directory, db_config=config, task='seed', db_log=DB_LOG_SEEDS)        
 
 if __name__ == '__main__':
     main()            

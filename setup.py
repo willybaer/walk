@@ -6,15 +6,16 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='walk',
-    version='0.2.4',
+    version='0.2.5',
     author='Wilhelm Dewald',
-    description='PostgreSQL. Database migration and seeds tool for postgres by using psycopg2 with python3.',
+    description='PostgreSQL. Database migration and seeds tool for postgres and mysql by using psycopg2 and mysql-connector with python3.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/willybaer/walk',
     packages=setuptools.find_packages(),
     install_requires=[
-        'psycopg2-binary'
+        'psycopg2-binary',
+        'mysql-connector-python'
         ],
     entry_points={
         'console_scripts': [
