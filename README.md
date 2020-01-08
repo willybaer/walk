@@ -1,6 +1,6 @@
 # WALK
 
-Walk is a simple python migrations and seeds tool for postgres databases. The application is based on 'psycopg2' to run sql commands.
+Walk is a simple python migrations and seeds tool for postgres and mysql databases. The application is based on 'psycopg2' and mysql-connector-python to run sql commands.
 
 ## Installation
 Download the this git repository and than inside the root folder of the repository.
@@ -11,7 +11,7 @@ pip install walk
 
 Current Version
 ```
-0.2.4
+0.3.0
 ```
 
 ### Configuration
@@ -28,16 +28,19 @@ The default walk_config.json looks like this.
 {
     "test": [
         "user=postgres",
-        "dbname=test"
+        "dbname=test",
+        "adapter=postgresql | mysql"
     ],
     "dev": [
         "user=postgres",
-        "dbname=dev"
+        "dbname=dev",
+        "adapter=postgresql | mysql"
     ],
     "prod": [
         "user=postgres",
         "dbname=prod",
-        "password=pw"
+        "password=pw",
+        "adapter=postgresql | mysql"
     ]
 }
 ```
@@ -49,7 +52,7 @@ Passing db config parameters directly to the command. The config attributes in t
     "dbname=test"
 }
 
-walk -p dbname=prod -p password=pw -e dev
+walk -p dbname=prod -p password=pw -p adapter=postgresql -e prod
 
 -> dbname=prod will be taken
 ```
