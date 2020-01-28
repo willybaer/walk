@@ -95,8 +95,8 @@ def run(db_config, t_dir, task='migration', db_log=DB_CHANGE_LOG):
         cur = conn.cursor()
 
         # Check if change log table exists
-        cur.execute('select exists(select * from information_schema.tables where table_name=%s) as num_entries',
-                    (db_log,))
+        cur.execute('select exists(select * from information_schema.tables where table_name=%s and table_schema=%s) as num_entries',
+                    (db_log,db_conn.params['dbname'],))
         entry = cur.fetchone()
         if not entry['num_entries']:
             # Creating log table
@@ -105,7 +105,7 @@ def run(db_config, t_dir, task='migration', db_log=DB_CHANGE_LOG):
             cur.execute(sql)
             conn.commit()
         else:
-            print('Database changelog table already exists')
+            print('Changelog table already exists')
 
         # Iterate over task files
         files = os.listdir(t_dir)
