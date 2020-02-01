@@ -2,16 +2,28 @@
 
 Walk is a simple python migrations and seeds tool for postgres and mysql databases. The application is based on 'psycopg2' and mysql-connector-python to run sql commands.
 
+## Install pip
+
+osx (Homebrew)
+```
+brew install python3
+```
+
+ubuntu (postgres and psycopg2 support)
+```
+sudo apt install python3-dev postgresql postgresql-contrib python3-psycopg2 libpq-dev
+```
+
 ## Installation
 Download the this git repository and than inside the root folder of the repository.
 
 ```
-pip install walk
+pip3 install walk
 ```
 
 Current Version
 ```
-0.3.0
+0.3.2
 ```
 
 ### Configuration
@@ -88,4 +100,13 @@ Migrations will be executed first so that seeds can also access current db chang
 
 ```
 walk --seed --env dev
+```
+
+### Load configuration values from .env
+
+Have a look inside the .env.example file for mor information about the valid parameters.
+
+Use the '-v' command line param to take config values from the .env file
+```
+waalk -m -e dev -v
 ```

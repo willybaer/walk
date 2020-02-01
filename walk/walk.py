@@ -5,6 +5,8 @@ import datetime
 import json
 import psycopg2
 import traceback
+from dotenv import load_dotenv
+load_dotenv()
 
 from walk.argsextractor import filter_args
 from walk.connector import connection
@@ -95,7 +97,7 @@ def run(db_config, t_dir, task='migration', db_log=DB_CHANGE_LOG):
         cur = conn.cursor()
 
         # Check if change log table exists
-        cur.execute('select exists(select * from information_schema.tables where table_name=%s and table_schema=%s) as num_entries',
+        cur.execute('select exists(select * from information_schema.tables where table_name=%s and table_catalog=%s) as num_entries',
                     (db_log,db_conn.params['dbname'],))
         entry = cur.fetchone()
         if not entry['num_entries']:
@@ -149,16 +151,41 @@ def run(db_config, t_dir, task='migration', db_log=DB_CHANGE_LOG):
     else:
         print('%s folder does not exists: %s' % (task, t_dir))
 
+
+def config_params_env():
+    # Format must look like this ['user=postgres', 'dbname=roni_dev', 'adapter=postgresql']
+    config_values = []
+    username = os.getenv('DB_USERNAME')
+    if username:
+        config_values.append('user=%s' % username)
+    password = os.getenv('DB_PASSWORD')
+    if password:
+        config_values.append('password=%s' % password)
+    db_name = os.getenv('DB_NAME')
+    if db_name:
+        config_values.append('dbname=%s' % db_name)
+    host = os.getenv('DB_HOSTNAME')
+    if host:
+        config_values.append('host=%s' % host)
+    port = os.getenv('DB_PORT')
+    if port:
+        config_values.append('port=%s' % port)
+    adapter = os.getenv('DB_ADAPTER')
+    if adapter:
+        config_values.append('adapter=%s' % adapter)
+    return config_values
+
 def main():
     argv = sys.argv
     args = filter_args(argv=argv, opts=[('n:', 'new='), ('m', 'migrate'), 
-            ('e:', 'env='), ('i', 'init'), ('f', 'force'), ('p:', 'param='),
+            ('e:', 'env='), ('v', 'variables'), ('i', 'init'), ('f', 'force'), ('p:', 'param='),
             ('w:', 'newseed='), ('s', 'seeds')])
     
     # Print information
     if len(list(map(lambda k: k in ('new=', 'migrate', 'init', 'newseed=', 'seeds'), args.keys()))) == 0:
         print(  '' +
                 '-i or --init                   Generates a default config file and the migrations directory. \n' +
+                '-v or --variables              Loads config values form .env file. \n' +
                 '-f or --force                  Forces the init function to recreate the default settings. \n' +
                 '-n or --new test_abc           Creates a new migration file. \n' +
                 '-w or --newseed test_abc     Creates a new seeds file. \n' +
@@ -198,22 +225,28 @@ def main():
     if 'env=' in args.keys():
         env = args['env='][0]
 
-    ## Merge config params
-    config_to_merge = []
-    config_params_to_merge = []
-    if 'param=' in args.keys():
-        config_to_merge = args['param=']
-        config_params_to_merge = list(map(lambda f: f.split('=')[0], filter(lambda e: e.split('=')[0] in ALLOWED_CONFIG_PARAMS, config_to_merge)))
+    ## GET CONFIG 
+    if 'variables' in args.keys():
+        config = config_params_env()
+    else:
+        config_to_merge = []
+        config_params_to_merge = []
+        
+        # get config values from walk_config.json and from the command line
+        if 'param=' in args.keys():
+            config_to_merge = args['param=']
+            config_params_to_merge = list(map(lambda f: f.split('=')[0], filter(lambda e: e.split('=')[0] in ALLOWED_CONFIG_PARAMS, config_to_merge)))
 
-    with open('./%s' % CONFIG_FILE_NAME, mode='r') as f:
-        configs = json.load(f)    
-        if env not in configs and len(config_to_merge) == 0:
-            print('Missing configuration for environment %s' % env)
-            return
-
-    config = configs[env]
-    config_file = list(filter(lambda e: e.split('=')[0] not in config_params_to_merge, config))
-    config = config_to_merge + config_file
+        with open('./%s' % CONFIG_FILE_NAME, mode='r') as f:
+            configs = json.load(f)    
+            if env not in configs and len(config_to_merge) == 0:
+                print('Missing configuration for environment %s' % env)
+                return
+        config = configs[env]
+        config_file = list(filter(lambda e: e.split('=')[0] not in config_params_to_merge, config))
+        config = config_to_merge + config_file
+    
+    ## RUN MIGRATION OR SEED
     if 'migrate' in args.keys():
         run(t_dir=migrations_directory, db_config=config, task='migration', db_log=DB_CHANGE_LOG)
 

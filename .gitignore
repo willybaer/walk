@@ -7,3 +7,4 @@ walk.egg-info/
 walk_config.json
 build/
 dist/
+.env
