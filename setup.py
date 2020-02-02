@@ -6,7 +6,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='walk',
-    version='0.3.2',
+    version='0.3.3',
     author='Wilhelm Dewald',
     description='PostgreSQL and MySQL. Database migration and seeds tool for postgres and mysql by using psycopg2 and mysql-connector with python3.',
     long_description=long_description,
