@@ -23,7 +23,7 @@ pip3 install walk
 
 Current Version
 ```
-0.3.2
+0.3.4
 ```
 
 ### Configuration
