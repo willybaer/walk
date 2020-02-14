@@ -99,8 +99,8 @@ def run(db_config, t_dir, task='migration', db_log=DB_CHANGE_LOG):
         cur = conn.cursor()
 
         # Check if change log table exists
-        cur.execute('select exists(select * from information_schema.tables where table_name=%s and table_catalog=%s) as num_entries',
-                    (db_log,db_conn.params['dbname'],))
+        cur.execute('select exists(select * from information_schema.tables where table_name=%s and (table_catalog=%s or table_schema=%s)) as num_entries',
+                    (db_log,db_conn.params['dbname'],db_conn.params['dbname'],))
         entry = cur.fetchone()
         if not entry['num_entries']:
             # Creating log table
@@ -133,7 +133,7 @@ def run(db_config, t_dir, task='migration', db_log=DB_CHANGE_LOG):
                         # Execute sql
                         print('executing %s for file %s' % (task, file))
                         s = open('%s/%s' % (t_dir, file), 'rb').read().decode('UTF-8')
-                        cur.execute(s)
+                        conn.execute_file(cur, s)
                         conn.commit()
 
                         # Add migration log entry

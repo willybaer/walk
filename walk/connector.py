@@ -22,6 +22,9 @@ class Connection:
   def cursor(self):
     pass
 
+  def execute_file(self, cursor, query):
+    pass
+
   def commit(self):
     self.connection.commit()
 
@@ -50,8 +53,11 @@ class MySQLConnection(Connection):
     return self
 
   def cursor(self):
-    return self.connection.cursor(dictionary=True)
+    return self.connection.cursor(dictionary=True, buffered=True)
 
+  def execute_file(self, cursor, query):
+    cursor.executemany(query, [])
+  
   def rollback(self):
     self.connection.rollback()
 
@@ -77,6 +83,9 @@ class PostgreSQLConnection(Connection):
 
   def cursor(self):
     return self.connection.cursor(cursor_factory=DictCursor)
+
+  def execute_file(self, cursor, query):
+    cursor.execute(query)
 
   def rollback(self):
     self.connection.rollback()
