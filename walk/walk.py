@@ -7,10 +7,12 @@ import psycopg2
 import traceback
 from dotenv import load_dotenv
 from pathlib import Path
+
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
 from walk.argsextractor import filter_args
+from walk.utils import sql_file_commands
 from walk.connector import connection
 
 EXAMPLE_CONFIG = {
@@ -130,11 +132,12 @@ def run(db_config, t_dir, task='migration', db_log=DB_CHANGE_LOG):
                     if last_entry and last_entry['last_timestamp'] >= int(log_level):
                         print('%s already exists for file %s' % (task, file))
                     else:
-                        # Execute sql
+                        # Execute sql commands in file
                         print('executing %s for file %s' % (task, file))
-                        s = open('%s/%s' % (t_dir, file), 'rb').read().decode('UTF-8')
-                        conn.execute_file(cur, s)
-                        conn.commit()
+                        content = open('%s/%s' % (t_dir, file), 'rb').read().decode('UTF-8')
+                        for sql_part in sql_file_commands(content):
+                            cur.execute(sql_part)
+                            conn.commit()
 
                         # Add migration log entry
                         print('Adding log entry for timestamp: %s' % log_level)

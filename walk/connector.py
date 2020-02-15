@@ -21,10 +21,7 @@ class Connection:
 
   def cursor(self):
     pass
-
-  def execute_file(self, cursor, query):
-    pass
-
+  
   def commit(self):
     self.connection.commit()
 
@@ -43,6 +40,7 @@ class MySQLConnection(Connection):
         passwd=self.params['password'] if 'password' in self.params else '',
         host=self.params['host'] if 'host' in self.params else 'localhost',
         port=self.params['port'] if 'port' in self.params else 3306)
+      self.connection.autocommit = True
     else:
       self.connection = mysql.connector.connect(
         user=self.params['user'],
@@ -54,9 +52,6 @@ class MySQLConnection(Connection):
 
   def cursor(self):
     return self.connection.cursor(dictionary=True, buffered=True)
-
-  def execute_file(self, cursor, query):
-    cursor.executemany(query, [])
   
   def rollback(self):
     self.connection.rollback()
@@ -83,9 +78,6 @@ class PostgreSQLConnection(Connection):
 
   def cursor(self):
     return self.connection.cursor(cursor_factory=DictCursor)
-
-  def execute_file(self, cursor, query):
-    cursor.execute(query)
 
   def rollback(self):
     self.connection.rollback()
